@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "115176405657",
+    "project_id": "arafathr-be7d2",
+    "storage_bucket": "arafathr-be7d2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:115176405657:android:7569fdc1742118ccea1608",
+        "android_client_info": {
+          "package_name": "com.puresoft.ArafatHr"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBvNRmK6ybs4mu9lrgbeVAxvu-O3YQSg8w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
