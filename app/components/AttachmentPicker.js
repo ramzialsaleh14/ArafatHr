@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Modal, Alert, Image, ActivityIndicator } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Modal, Alert, Image, ActivityIndicator, Linking } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
 //import { useAudioRecorder, RecordingOptions, AudioModule, RecordingPresets } from 'expo-audio';
@@ -9,8 +9,8 @@ import { Ionicons } from "@expo/vector-icons";
 import * as FileSystem from "expo-file-system";
 import * as ServerOperations from "../utils/ServerOperations";
 
-const AttachmentPicker = ({ onAttachmentSelected }) => {
-    const [attachment, setAttachment] = useState(null);
+const AttachmentPicker = ({ onAttachmentSelected, onAttachmentsChanged }) => {
+    const [attachments, setAttachments] = useState([]);
     const [menuVisible, setMenuVisible] = useState(false);
     //const [audio, setAudio] = useState(null);
     const [imagePreviewVisible, setImagePreviewVisible] = useState(false);
@@ -19,12 +19,43 @@ const AttachmentPicker = ({ onAttachmentSelected }) => {
     const [cameraPermission, setCameraPermission] = useState(null);
     const [isUploading, setIsUploading] = useState(false);
 
+    const addAttachment = (filename, fileData) => {
+        const newAttachment = {
+            id: Date.now().toString(),
+            filename: filename,
+            data: fileData,
+            type: fileData.type
+        };
+
+        const updatedAttachments = [...attachments, newAttachment];
+        setAttachments(updatedAttachments);
+
+        // Call both callbacks for backward compatibility
+        if (onAttachmentSelected) {
+            onAttachmentSelected(filename);
+        }
+        if (onAttachmentsChanged) {
+            onAttachmentsChanged(updatedAttachments);
+        }
+    };
+
+    const removeAttachment = (attachmentId) => {
+        const updatedAttachments = attachments.filter(att => att.id !== attachmentId);
+        setAttachments(updatedAttachments);
+
+        if (onAttachmentsChanged) {
+            onAttachmentsChanged(updatedAttachments);
+        }
+    };
+
     // Add this function after your existing functions
     const takePicture = async () => {
+        console.log('Take picture function called');
         setMenuVisible(false);
 
         // Request camera permission
         const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+        console.log('Camera permission result:', permissionResult);
         if (!permissionResult.granted) {
             Alert.alert("Permission Required", "Permission to access the camera is required!");
             return;
@@ -32,10 +63,11 @@ const AttachmentPicker = ({ onAttachmentSelected }) => {
 
         // Launch camera
         const result = await ImagePicker.launchCameraAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: true,
+            mediaTypes: 'Images',
             quality: 1,
         });
+
+        console.log('Camera result:', result);
 
         if (!result.canceled && result.assets.length > 0) {
             setIsUploading(true);
@@ -50,12 +82,11 @@ const AttachmentPicker = ({ onAttachmentSelected }) => {
                     uri: result.assets[0].uri,
                     name: generatedName
                 };
-                setAttachment(file);
 
-                const res = await ServerOperations.pickUploadHttpRequest(file, 1);
+                const res = await ServerOperations.pickUploadHttpRequest(file);
                 console.log('Camera upload response:', res);
-                // Use the generated filename, not server response
-                onAttachmentSelected(generatedName);
+                // Add to attachments list
+                addAttachment(generatedName, file);
             } catch (error) {
                 console.error('Camera upload error:', error);
                 Alert.alert("Upload Error", "Failed to upload image. Please try again.");
@@ -176,18 +207,21 @@ const AttachmentPicker = ({ onAttachmentSelected }) => {
 
     // Function to pick an image
     const pickImage = async () => {
+        console.log('Pick image function called');
         setMenuVisible(false);
         const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        console.log('Media library permission result:', permissionResult);
         if (!permissionResult.granted) {
             Alert.alert("Permission Required", "Permission to access the gallery is required!");
             return;
         }
 
         const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: true,
+            mediaTypes: 'Images',
             quality: 1,
         });
+
+        console.log('Gallery result:', result);
 
         if (!result.canceled && result.assets.length > 0) {
             setIsUploading(true);
@@ -202,12 +236,11 @@ const AttachmentPicker = ({ onAttachmentSelected }) => {
                     uri: result.assets[0].uri,
                     name: generatedName
                 };
-                setAttachment(file);
 
-                const res = await ServerOperations.pickUploadHttpRequest(file, 1);
+                const res = await ServerOperations.pickUploadHttpRequest(file);
                 console.log('Image upload response:', res);
-                // Use the generated filename, not server response
-                onAttachmentSelected(generatedName);
+                // Add to attachments list
+                addAttachment(generatedName, file);
             } catch (error) {
                 console.error('Image upload error:', error);
                 Alert.alert("Upload Error", "Failed to upload image. Please try again.");
@@ -238,12 +271,11 @@ const AttachmentPicker = ({ onAttachmentSelected }) => {
                     uri: result.assets[0].uri,
                     name: generatedName
                 };
-                setAttachment(file);
 
-                const res = await ServerOperations.pickUploadHttpRequest(file, 1);
+                const res = await ServerOperations.pickUploadHttpRequest(file);
                 console.log('File upload response:', res);
-                // Use the generated filename, not server response
-                onAttachmentSelected(generatedName);
+                // Add to attachments list
+                addAttachment(generatedName, file);
             } catch (error) {
                 console.error('File upload error:', error);
                 Alert.alert("Upload Error", "Failed to upload file. Please try again.");
@@ -254,12 +286,13 @@ const AttachmentPicker = ({ onAttachmentSelected }) => {
     };
 
     // Handle attachment press
-    const handleAttachmentPress = () => {
-        if (attachment.type.startsWith("image")) {
-            previewImage(attachment.uri);
-        } else {
-            Alert.alert("Unsupported File", "This file type is not supported for preview.");
-        }
+    const handleAttachmentPress = (attachment) => {
+        const attachmentUrl = `${Constants.attachmentPath}/${attachment.filename}`;
+        console.log('Opening attachment URL:', attachmentUrl);
+        Linking.openURL(attachmentUrl).catch((err) => {
+            console.error("Failed to open attachment:", err);
+            Alert.alert("Error", "Failed to open attachment. Please try again.");
+        });
     };
 
     const previewImage = (uri) => {
@@ -271,7 +304,13 @@ const AttachmentPicker = ({ onAttachmentSelected }) => {
         <View style={styles.container}>
             <TouchableOpacity
                 style={[styles.menuButton, isUploading && styles.menuButtonDisabled]}
-                onPress={() => !isUploading && setMenuVisible(true)}
+                onPress={() => {
+                    console.log('Attachment button pressed, isUploading:', isUploading);
+                    if (!isUploading) {
+                        console.log('Setting menu visible to true');
+                        setMenuVisible(true);
+                    }
+                }}
                 disabled={isUploading}
             >
                 {isUploading ? (
@@ -280,9 +319,39 @@ const AttachmentPicker = ({ onAttachmentSelected }) => {
                     <Ionicons name="attach" size={24} color="#fff" style={{ marginHorizontal: 5 }} />
                 )}
                 <Text style={styles.menuButtonText}>
-                    {isUploading ? i18n.t("uploading") || "Uploading..." : i18n.t("addAttachment")}
+                    {isUploading ? i18n.t("uploading") || "Uploading..." :
+                        attachments.length > 0 ? `${i18n.t("addAttachment")} (${attachments.length})` : i18n.t("addAttachment")}
                 </Text>
             </TouchableOpacity>
+
+            {/* Attachments List */}
+            {attachments.length > 0 && (
+                <View style={styles.attachmentsList}>
+                    {attachments.map((attachment) => (
+                        <View key={attachment.id} style={styles.attachmentItem}>
+                            <TouchableOpacity
+                                style={styles.attachmentContent}
+                                onPress={() => handleAttachmentPress(attachment)}
+                            >
+                                <Ionicons
+                                    name={attachment.type.startsWith('image') ? "image" : "document"}
+                                    size={20}
+                                    color="#007bff"
+                                />
+                                <Text style={styles.attachmentText} numberOfLines={1}>
+                                    {attachment.filename}
+                                </Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={styles.removeButton}
+                                onPress={() => removeAttachment(attachment.id)}
+                            >
+                                <Ionicons name="close-circle" size={20} color="#ff4444" />
+                            </TouchableOpacity>
+                        </View>
+                    ))}
+                </View>
+            )}
 
             {/* Loading Modal */}
             <Modal
@@ -302,15 +371,24 @@ const AttachmentPicker = ({ onAttachmentSelected }) => {
                 transparent={true}
                 visible={menuVisible}
                 animationType="slide"
-                onRequestClose={() => setMenuVisible(false)}
+                onRequestClose={() => {
+                    console.log('Modal closing');
+                    setMenuVisible(false);
+                }}
             >
                 <View style={styles.modalOverlay}>
                     <View style={styles.menu}>
-                        <TouchableOpacity style={styles.menuItem} onPress={takePicture}>
+                        <TouchableOpacity style={styles.menuItem} onPress={() => {
+                            console.log('Take picture button pressed');
+                            takePicture();
+                        }}>
                             <Ionicons name="camera" size={20} color="#007bff" style={{ marginRight: 10 }} />
                             <Text style={styles.menuItemText}>{i18n.t("takePhoto")}</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.menuItem} onPress={pickImage}>
+                        <TouchableOpacity style={styles.menuItem} onPress={() => {
+                            console.log('Pick image button pressed');
+                            pickImage();
+                        }}>
                             <Text style={styles.menuItemText}>{i18n.t("attachPhoto")}</Text>
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.menuItem} onPress={pickFile}>
@@ -455,6 +533,33 @@ const styles = StyleSheet.create({
         color: "#fff",
         fontSize: 16,
         fontWeight: "bold",
+    },
+    attachmentsList: {
+        marginTop: 10,
+    },
+    attachmentItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#f5f5f5',
+        padding: 10,
+        marginVertical: 2,
+        borderRadius: 5,
+        borderWidth: 1,
+        borderColor: '#ddd',
+    },
+    attachmentContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+    },
+    attachmentText: {
+        marginLeft: 8,
+        fontSize: 14,
+        color: '#333',
+        flex: 1,
+    },
+    removeButton: {
+        padding: 5,
     },
 });
 

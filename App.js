@@ -7,6 +7,10 @@ import * as Notifications from 'expo-notifications';
 
 import LoginScreen from './app/screens/LoginScreen';
 import MainScreen from './app/screens/MainScreen';
+import TakeLeaveScreen from './app/screens/TakeLeaveScreen';
+import PendingRequestsScreen from './app/screens/PendingRequestsScreen';
+import AllRequestsHr from './app/screens/AllRequestsHr';
+import MyRequestsScreen from './app/screens/MyRequestsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -58,6 +62,26 @@ export default function App() {
                 <Stack.Screen
                     name="Main"
                     component={MainScreen}
+                    options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                    name="TakeLeave"
+                    component={TakeLeaveScreen}
+                    options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                    name="PendingRequests"
+                    component={PendingRequestsScreen}
+                    options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                    name="AllRequestsHr"
+                    component={AllRequestsHr}
+                    options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                    name="MyRequestsScreen"
+                    component={MyRequestsScreen}
                     options={{ headerShown: false }}
                 />
             </Stack.Navigator>

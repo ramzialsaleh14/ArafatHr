@@ -51,6 +51,7 @@ export default function LoginScreen({ navigation }) {
                     const resp = await ServerOperations.checkLogin(userNoStorage, passwordStorage, Constants.appVersion);
                     if (resp && resp.result === true) {
                         await Commons.saveToAS("userID", userNoStorage);
+                        await Commons.saveToAS("userName", resp.userName);
                         await Commons.saveToAS("password", passwordStorage);
 
                         // Save user info for check-in/out system
@@ -60,7 +61,8 @@ export default function LoginScreen({ navigation }) {
                         }
 
                         const isHr = resp.isHr === "Y";
-                        navigation.navigate("Main", { isHr });
+                        const isManager = resp.isManager === true || resp.isManager === "Y"; // Handle both boolean and string
+                        navigation.navigate("Main", { isHr, isManager, userName: resp.userName });
                     } else {
                         Alert.alert(i18n.t('loginFailed'), i18n.t('invalidCredentials'));
                     }
@@ -79,6 +81,7 @@ export default function LoginScreen({ navigation }) {
             if (response.result) {
                 // Save credentials
                 await Commons.saveToAS("userID", username);
+                await Commons.saveToAS("userName", response.userName);
                 await Commons.saveToAS("password", password);
 
                 // Save user info for check-in/out system
@@ -88,7 +91,10 @@ export default function LoginScreen({ navigation }) {
                 }
 
                 const isHr = response.isHr === "Y";
-                navigation.navigate('Main', { isHr });
+                const isManager = response.isManager === true || response.isManager === "Y"; // Handle both boolean and string
+                navigation.navigate('Main', { isHr, isManager, userName: response.userName });
+            } else if (response.msg) {
+                Alert.alert(i18n.t('loginFailed'), response.msg);
             } else {
                 Alert.alert(i18n.t('loginFailed'), i18n.t('invalidCredentials'));
             }
@@ -101,11 +107,10 @@ export default function LoginScreen({ navigation }) {
     }
 
     // tiny 1x1 PNG (transparent) embedded so project runs without external assets
-    const tinyPngDataUri = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=';
 
     return (
         <View style={styles.container}>
-            <Image source={{ uri: tinyPngDataUri }} style={styles.logo} />
+            <Image source={require('../../assets/logo.png')} style={styles.logo} />
             <Text style={styles.title}>{i18n.t('appTitle')}</Text>
 
             <TextInput
@@ -127,6 +132,10 @@ export default function LoginScreen({ navigation }) {
             <TouchableOpacity style={styles.button} onPress={onLogin}>
                 <Text style={styles.buttonText}>{i18n.t('login')}</Text>
             </TouchableOpacity>
+
+            <Text style={styles.versionText}>
+                {Constants.appVersion}
+            </Text>
         </View>
     );
 }
@@ -140,11 +149,11 @@ const styles = StyleSheet.create({
         padding: 20,
     },
     logo: {
-        width: 120,
-        height: 120,
+        width: 150,
+        height: 150,
         marginBottom: 16,
-        borderRadius: 60,
-        backgroundColor: '#eee'
+        borderRadius: 10,
+        backgroundColor: '#fff',
     },
     title: {
         fontSize: 28,
@@ -173,5 +182,12 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontWeight: '600',
         fontSize: 16,
+    },
+    versionText: {
+        color: '#8E8E93',
+        fontSize: 14,
+        fontWeight: '500',
+        marginTop: 20,
+        textAlign: 'center',
     },
 });

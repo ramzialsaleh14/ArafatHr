@@ -1,7 +1,7 @@
 import { Platform } from "react-native";
 // Urls
 // ********* DON'T FORGET TO UPDATE VERSION ON WEBSERVICE *********
-export const appVersion = "v1.0"; // ********* DON'T FORGET TO UPDATE VERSION ON WEBSERVICE *********
+export const appVersion = "v1.1.0"; // ********* DON'T FORGET TO UPDATE VERSION ON WEBSERVICE *********
 // ********* DON'T FORGET TO UPDATE VERSION ON WEBSERVICE *********
 export const serverBaseUrl = "http://109.107.244.79:9191";
 export const serverPublicBaseUrl = "http://109.107.244.79:9191";
@@ -42,6 +42,8 @@ export const GET_CHECK_IN_LIST_HR = "GET.CHECK.IN.LIST.HR";
 export const GET_MY_REQUESTS_LEAVES = "GET.MY.REQUESTS.LEAVES";
 export const GET_MY_REQUESTS_LOANS = "GET.MY.REQUESTS.LOANS";
 export const GET_MY_REQUESTS_ADMIN = "GET.MY.REQUESTS.ADMIN";
+export const GET_PENDING_REQUESTS = "GET.PENDING.REQUESTS";
+export const GET_NAMES_LIST = "GET.NAMES.LIST";
 export const RESPOND_TO_REQUEST = "RESPOND.TO.REQUEST";
 export const RESPOND_TO_LOAN_REQUEST = "RESPOND.TO.LOAN.REQUEST";
 export const RESPOND_TO_ADMIN_REQUEST = "RESPOND.TO.ADMIN.REQUEST";
@@ -64,5 +66,6 @@ export const GET_LOCATION_DISTANCE = "GET.LOCATION.DISTANCE";
 export const SUBMIT_LOAN = "SUBMIT.LOAN";
 export const SUBMIT_ADMIN_REQ = "SUBMIT.ADMIN.REQ";
 export const GET_ADMIN_REQ_TYPES = "GET.ADMIN.REQ.TYPES";
-export const GET_NAMES_LIST = "GET.NAMES.LIST";
 export const CHANGE_PASSWORD = "CHANGE.PASSWORD";
+export const SEND_APP_NOTES = "SEND.APP.NOTES";
+export const GET_USER_GROUP_DETAILS = "GET.USER.GROUP.DETAILS";

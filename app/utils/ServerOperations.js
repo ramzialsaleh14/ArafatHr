@@ -96,6 +96,8 @@ export const pickHttpRequest = async (params) => {
   return response;
 };
 
+
+
 export const checkLogin = async (userID, password, appVersion) => {
   try {
     /* Request params */
@@ -155,6 +157,26 @@ export const getNamesList = async () => {
   return null;
 };
 
+export const getLeavesInfo = async (user) => {
+  /* Request params */
+  let params = "";
+  params += `action=${Constants.GET_LEAVES_INFO}`;
+  params += `&USER=${user}`;
+
+  /* Send request */
+  const response = await pickHttpRequest(params);
+
+  /* Check response */
+  if (response === Constants.networkError_code) {
+    return null;
+  }
+  if (response.ok) {
+    return await response.json();
+  }
+
+  return null;
+};
+
 export const pickUploadHttpRequest = async (file) => {
   /* Send request */
   const TIMEOUT = 45000;
@@ -187,16 +209,66 @@ export const pickUploadHttpRequest = async (file) => {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const responseData = await response.json();
-    console.log('Upload successful:', responseData);
-    return responseData;
+    // Check if response is JSON
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      const responseData = await response.json();
+      console.log('Upload successful:', responseData);
+      return responseData;
+    } else {
+      // If not JSON, treat as success and return filename
+      const responseText = await response.text();
+      console.log('Upload successful (non-JSON response):', responseText);
+      return { URL: file.name, success: true };
+    }
   } catch (error) {
     console.error('Upload error:', error);
     return Constants.networkError_code;
   }
 };
 
-export const checkinorout = async (user, date, time, location, type, userdevId) => {
+export const getLocations = async (user) => {
+  /* Request params */
+  let params = "";
+  params += `action=${Constants.GET_LOCATIONS}`;
+  params += `&USER=${user}`;
+
+  /* Send request */
+  const response = await pickHttpRequest(params);
+
+  /* Check response */
+  if (response === Constants.networkError_code) {
+    return null;
+  }
+  if (response.ok) {
+    return await response.json();
+  }
+
+  return null;
+};
+
+export const CheckIsChecked = async (user, date, type) => {
+  /* Request params */
+  let params = "";
+  params += `action=${Constants.CHECK_IS_CHECKED}`;
+  params += `&USER=${user}`;
+  params += `&DATE=${date}`;
+  params += `&TYPE=${type}`;
+  /* Send request */
+  const response = await pickHttpRequest(params);
+
+  /* Check response */
+  if (response === Constants.networkError_code) {
+    return null;
+  }
+  if (response.ok) {
+    return await response.json();
+  }
+
+  return null;
+};
+
+export const checkInOrOut = async (user, date, time, location, type, userdevId) => {
   try {
     /* Request params */
     let params = "";
@@ -338,4 +410,176 @@ export const clearUserDeviceID = async (userNo) => {
   return null;
 };
 
+export const submitLeaveRequest = async (
+  leaveTypeId,
+  fromDate,
+  toDate,
+  fromTime,
+  toTime,
+  note,
+  attachments,
+  user
+) => {
+  /* Request params */
+  let params = "";
+  params += `action=${Constants.SUBMIT_LEAVE_REQ}`;
+  params += `&LEAVE.TYPE=${leaveTypeId}`;
 
+  // Send all date/time parameters regardless of holidayOrLeave
+  params += `&FROM.DATE=${fromDate}`;
+  params += `&TO.DATE=${toDate}`;
+  params += `&FROM.TIME=${fromTime}`;
+  params += `&TO.TIME=${toTime}`;
+  params += `&NOTE=${encodeURIComponent(note)}`;
+  params += `&ATTACHMENTS=${encodeURIComponent(attachments)}`;
+  params += `&USER=${user}`;
+
+  /* Send request */
+  const response = await pickHttpRequest(params);
+
+  /* Check response */
+  if (response === Constants.networkError_code) {
+    return null;
+  }
+  if (response.ok) {
+    return await response.json();
+  }
+
+  return null;
+};
+
+
+/* Get pending leave requests for a user */
+export const getPendingRequests = async (user) => {
+  /* Request params */
+  let params = "";
+  params += `action=${Constants.GET_PENDING_REQUESTS}`;
+  params += `&USER=${user}`;
+
+  /* Send request */
+  const response = await pickHttpRequest(params);
+
+  /* Check response */
+  if (response === Constants.networkError_code) {
+    return null;
+  }
+  if (response.ok) {
+    return await response.json();
+  }
+
+  return null;
+};
+
+/* Get user group details */
+export const getUserGroupDetails = async (user) => {
+  /* Request params */
+  let params = "";
+  params += `action=${Constants.GET_USER_GROUP_DETAILS}`;
+  params += `&USER=${user}`;
+
+  /* Send request */
+  const response = await pickHttpRequest(params);
+
+  /* Check response */
+  if (response === Constants.networkError_code) {
+    return null;
+  }
+  if (response.ok) {
+    return await response.json();
+  }
+
+  return null;
+};
+
+/* Send app notes for a user */
+export const sendAppNotes = async (user, date, note) => {
+  /* Request params */
+  let params = "";
+  params += `action=${Constants.SEND_APP_NOTES}`;
+  params += `&USER=${encodeURIComponent(user)}`;
+  params += `&DATE=${encodeURIComponent(date)}`;
+  params += `&NOTE=${encodeURIComponent(note)}`;
+
+  /* Send request */
+  const response = await pickHttpRequest(params);
+
+  /* Check response */
+  if (response === Constants.networkError_code) {
+    return null;
+  }
+  if (response.ok) {
+    return await response.json();
+  }
+
+  return null;
+};
+
+/* Respond to a leave request (accept/reject) */
+export const respondToRequest = async (requestId, response, notes, user) => {
+  /* Request params */
+  let params = "";
+  params += `action=${Constants.RESPOND_TO_REQUEST}`;
+  params += `&REQUEST.ID=${requestId}`;
+  params += `&RESPONSE=${response}`;
+  params += `&NOTES=${encodeURIComponent(notes || '')}`;
+  params += `&USER=${user}`;
+
+  /* Send request */
+  const serverResponse = await pickHttpRequest(params);
+
+  /* Check response */
+  if (serverResponse === Constants.networkError_code) {
+    return { success: false, error: 'Network error' };
+  }
+
+  if (serverResponse.ok) {
+    const result = await serverResponse.json();
+    return { success: true, data: result };
+  }
+
+  return { success: false, error: 'Server error' };
+};
+
+/* Get names list for employee selection */
+export const getNameslist = async () => {
+  /* Request params */
+  let params = "";
+  params += `action=${Constants.GET_NAMES_LIST}`;
+
+  /* Send request */
+  const response = await pickHttpRequest(params);
+
+  /* Check response */
+  if (response === Constants.networkError_code) {
+    return null;
+  }
+  if (response.ok) {
+    return await response.json();
+  }
+
+  return null;
+};
+
+/* Get all HR requests with filters */
+export const getAllRequestsHr = async (fromDate, toDate, empId, status) => {
+  /* Request params */
+  let params = "";
+  params += `action=${Constants.GET_ALL_REQUESTS_HR}`;
+  params += `&FROM.DATE=${fromDate}`;
+  params += `&TO.DATE=${toDate}`;
+  params += `&EMP.ID=${empId}`;
+  params += `&STATUS=${status}`;
+
+  /* Send request */
+  const response = await pickHttpRequest(params);
+
+  /* Check response */
+  if (response === Constants.networkError_code) {
+    return null;
+  }
+  if (response.ok) {
+    return await response.json();
+  }
+
+  return null;
+};

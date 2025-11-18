@@ -4,11 +4,8 @@
     "slug": "arafathr",
     "version": "1.0.0",
     "sdkVersion": "54.0.0",
-    "platforms": [
-      "ios",
-      "android",
-      "web"
-    ],
+    "owner": "arafathr",
+    "platforms": ["ios", "android"],
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "splash": {
@@ -17,7 +14,8 @@
       "backgroundColor": "#ffffff"
     },
     "updates": {
-      "fallbackToCacheTimeout": 0
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/3b51acee-077c-44da-b06e-e1b7b1c6672f"
     },
     "android": {
       "package": "com.puresoft.ArafatHr",
@@ -33,12 +31,16 @@
         "MEDIA_LIBRARY",
         "NOTIFICATIONS",
         "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "MEDIA_LIBRARY",
+        "NOTIFICATIONS",
+        "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION"
       ]
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "plugins": [
       "expo-localization",
       [
@@ -59,6 +61,13 @@
     "extra": {
       "eas": {
         "projectId": "3b51acee-077c-44da-b06e-e1b7b1c6672f"
+      }
+    },
+    "runtimeVersion": "1.0.0",
+    "ios": {
+      "bundleIdentifier": "com.puresoft.ArafatHr",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
       }
     }
   }
